@@ -109,9 +109,15 @@ def build_transform(is_train, args):
     in_chans = getattr(args, 'in_chans', 3)
     is_lidar = getattr(args, 'data_set', '') == 'LIDAR'
 
-    # Grayscale stats (computed at runtime by Phase 0 health check; defaults near 0.5)
+    # Grayscale stats (measured on lidar_320x192_grayscale_5class by Phase 0 — dataset is very dark).
+    # Override via env if you re-run Phase 0 on a different dataset.
     if is_lidar and in_chans == 1:
-        norm_mean, norm_std = (0.5,), (0.5,)
+        norm_mean = (float(os.environ.get('LIDAR_MEAN', 0.1173)),)
+        norm_std = (float(os.environ.get('LIDAR_STD', 0.0915)),)
+    elif is_lidar and in_chans == 3:
+        m = float(os.environ.get('LIDAR_MEAN', 0.1173))
+        s = float(os.environ.get('LIDAR_STD', 0.0915))
+        norm_mean, norm_std = (m, m, m), (s, s, s)
     else:
         norm_mean, norm_std = IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 
