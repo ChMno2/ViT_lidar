@@ -52,7 +52,9 @@ tensorboard/
 data/imagenet/
 data/coco/
 lidar_320/
-**/lidar_320/
+lidar_320x192_grayscale_5class/
+lidar_*/
+**/lidar_*/
 *.tar
 *.tar.gz
 *.tgz
