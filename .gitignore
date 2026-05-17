@@ -1,0 +1,64 @@
+# --- Secrets / local config (DO NOT COMMIT) ---
+.vscode/sftp.json
+.vscode/settings.json
+*.pem
+*.key
+.env
+.env.*
+
+# --- macOS ---
+.DS_Store
+._*
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# --- Virtual envs ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- ML / training artifacts ---
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.tflite
+*.h5
+*.pkl
+checkpoints/
+runs/
+logs/
+wandb/
+output/
+outputs/
+results/
+tensorboard/
+
+# --- Datasets (usually too big for git) ---
+data/imagenet/
+data/coco/
+lidar_320/
+**/lidar_320/
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+
+# --- Editor / IDE ---
+.idea/
+*.swp
+*.swo
