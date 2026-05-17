@@ -96,45 +96,58 @@ def build_dataset(is_train, args):
         dataset = INatDataset(args.data_path, train=is_train, year=2019,
                               category=args.inat_category, transform=transform)
         nb_classes = dataset.nb_classes
+    elif args.data_set == 'LIDAR':
+        # LiDAR image dataset (ImageFolder layout). Supports grayscale 1ch or 3ch.
+        root = os.path.join(args.data_path, 'train' if is_train else 'val')
+        dataset = datasets.ImageFolder(root, transform=transform)
+        nb_classes = getattr(args, 'nb_classes_override', None) or len(dataset.classes)
     return dataset, nb_classes
 
 
 def build_transform(is_train, args):
     resize_im = args.input_size > 32
+    in_chans = getattr(args, 'in_chans', 3)
+    is_lidar = getattr(args, 'data_set', '') == 'LIDAR'
+
+    # Grayscale stats (computed at runtime by Phase 0 health check; defaults near 0.5)
+    if is_lidar and in_chans == 1:
+        norm_mean, norm_std = (0.5,), (0.5,)
+    else:
+        norm_mean, norm_std = IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
+
     if is_train:
         # this should always dispatch to transforms_imagenet_train
         transform = create_transform(
             input_size=args.input_size,
             is_training=True,
-            color_jitter=args.color_jitter,
-            auto_augment=args.aa,
+            color_jitter=args.color_jitter if not is_lidar else 0.0,
+            auto_augment=args.aa if not is_lidar else None,
             interpolation=args.train_interpolation,
             re_prob=args.reprob,
             re_mode=args.remode,
             re_count=args.recount,
+            mean=norm_mean,
+            std=norm_std,
         )
         if not resize_im:
-            # replace RandomResizedCropAndInterpolation with
-            # RandomCrop
             transform.transforms[0] = transforms.RandomCrop(
                 args.input_size, padding=4)
+        if is_lidar and in_chans == 1:
+            transform.transforms.insert(0, transforms.Grayscale(num_output_channels=1))
         return transform
 
     t = []
+    if is_lidar and in_chans == 1:
+        t.append(transforms.Grayscale(num_output_channels=1))
+
     if args.finetune:
-        t.append(
-            transforms.Resize((args.input_size, args.input_size),
-                                interpolation=3)
-        )
+        t.append(transforms.Resize((args.input_size, args.input_size), interpolation=3))
     else:
         if resize_im:
             size = int((256 / 224) * args.input_size)
-            t.append(
-                # to maintain same ratio w.r.t. 224 images
-                transforms.Resize(size, interpolation=3),
-            )
+            t.append(transforms.Resize(size, interpolation=3))
             t.append(transforms.CenterCrop(args.input_size))
-    
+
     t.append(transforms.ToTensor())
-    t.append(transforms.Normalize(IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD))
+    t.append(transforms.Normalize(norm_mean, norm_std))
     return transforms.Compose(t)

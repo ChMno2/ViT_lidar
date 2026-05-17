@@ -161,8 +161,13 @@ def get_args_parser():
     # Dataset parameters
     parser.add_argument('--data-path', default='datasets/imagenet-1k', type=str,
                         help='dataset path')
-    parser.add_argument('--data-set', default='IMNET', choices=['CIFAR', 'IMNET', 'INAT', 'INAT19'],
+    parser.add_argument('--data-set', default='IMNET',
+                        choices=['CIFAR', 'IMNET', 'IMNETEE', 'FLOWERS', 'INAT', 'INAT19', 'LIDAR'],
                         type=str, help='Image Net dataset path')
+    parser.add_argument('--in-chans', default=3, type=int,
+                        help='Input image channels (3 for RGB, 1 for grayscale).')
+    parser.add_argument('--nb-classes-override', default=0, type=int,
+                        help='Override number of classes (0=auto-detect from dataset).')
     parser.add_argument('--inat-category', default='name',
                         choices=['kingdom', 'phylum', 'class', 'order',
                                  'supercategory', 'family', 'genus', 'name'],
@@ -286,17 +291,16 @@ def main(args):
             label_smoothing=args.smoothing, num_classes=args.nb_classes)
 
     print(f"Creating model: {args.model}")
-    model = create_model(
-        args.model,
-        num_classes=args.nb_classes,
-        distillation=(args.distillation_type != 'none'),
-        pretrained=False,
-        fuse=False,
-    )
+    _is_microvit = 'microvit' in args.model.lower() or 'shvit' in args.model.lower()
+    _model_kwargs = dict(num_classes=args.nb_classes, pretrained=False, in_chans=args.in_chans)
+    if _is_microvit:
+        _model_kwargs['distillation'] = (args.distillation_type != 'none')
+        _model_kwargs['fuse'] = False
+    model = create_model(args.model, **_model_kwargs)
 
     from ptflops import get_model_complexity_info
     macs, n_parameters = get_model_complexity_info(
-                        model.eval(), (3, args.input_size, args.input_size), as_strings=False,
+                        model.eval(), (args.in_chans, args.input_size, args.input_size), as_strings=False,
                         print_per_layer_stat=False, verbose=False)
     gmacs = macs / (1000**3)
     print(f"{args.model}, params: {(n_parameters/(1000**2)):.2f} M, macs: {gmacs:.3f} G")

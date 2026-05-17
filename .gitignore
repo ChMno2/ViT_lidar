@@ -1,6 +1,7 @@
 # --- Secrets / local config (DO NOT COMMIT) ---
 .vscode/sftp.json
 .vscode/settings.json
+.claude/settings.local.json
 *.pem
 *.key
 .env
@@ -46,6 +47,7 @@ wandb/
 output/
 outputs/
 results/
+experiments/results/
 tensorboard/
 
 # --- Datasets (usually too big for git) ---
