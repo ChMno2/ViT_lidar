@@ -1,23 +1,17 @@
 #!/usr/bin/env bash
 # ImageNet-1K — FROM-SCRATCH TRAINING. Reproduces the paper's training recipe.
+# Locked to MicroViT-S1 (microvit_1), the smallest variant — 6.4M params, 231M FLOPs.
 #
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # !!  RESOURCE WARNING                                                       !!
-# !!                                                                          !!
 # !!  - Dataset:    ImageNet-1K (~150 GB on disk)                             !!
-# !!  - Compute:    4x A100/3090/4090 recommended; the paper used 4 GPUs      !!
-# !!  - Wall time:  ~3-7 days on 4x A100 for 300 epochs                       !!
+# !!  - Compute:    4x A100/3090/4090 recommended (override NUM_GPU)          !!
+# !!  - Wall time:  ~3-5 days on 4x A100 for 300 epochs (S1 is fastest)       !!
 # !!  - Memory:     ~30 GB GPU VRAM total at batch 2048                       !!
-# !!                                                                          !!
-# !!  Before running, STRONGLY consider:                                      !!
-# !!    1. Just run imagenet1k_eval_only.sh to validate the paper number      !!
-# !!       (5 minutes, no training).                                          !!
-# !!    2. Train on a subset (e.g. ImageNet-100) to validate the recipe       !!
-# !!       end-to-end before committing 4-GPU days.                           !!
-# !!                                                                          !!
-# !!  See experiments/README.md for the recommended workflow.                 !!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 set -e
+# Force smallest model regardless of caller's $MODEL env.
+export MODEL=microvit_1
 source "$(dirname "$0")/_common.sh"
 
 : "${IMAGENET_PATH:?Set IMAGENET_PATH to your ImageNet-1K root.}"
