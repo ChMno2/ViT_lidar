@@ -126,6 +126,74 @@ def microvitv2_3(pretrained=False, **kwargs):
     # reparameterize(model)
     return model
 
+# ============================================================
+# 64x64 input variants (Phase 5 — FPGA-target experiments)
+# ============================================================
+# Designed for 64x64 grayscale LiDAR input. Patch size 4 keeps
+# enough tokens (16x16=256 initially) for the 3-stage hierarchical
+# design to work. attn_ipg reduced for smaller dims.
+
+@register_model
+def microvit_1_64(pretrained=False, **kwargs):
+    """Same dims/depths as microvit_1, but patch_size=4 for 64x64 input.
+    Params ~= microvit_1; MACs ~85% lower than 224x224 microvit_1."""
+    model = MicroViT(
+        dims=[128, 256, 320],
+        depths=[2, 5, 5],
+        type=['c', 'c', 'a'],
+        qk_dim=[0, 0, 16],
+        attn_sr=[0, 0, 1],
+        attn_ipg=[0, 0, 32],
+        attn_cr=[0, 0, 0.215],
+        mlp_ratio=2,
+        patch_size=4,
+        act_layer=nn.GELU,
+        final_feature=None,
+        **kwargs,
+    )
+    return model
+
+
+@register_model
+def microvit_nano_64(pretrained=False, **kwargs):
+    """Mid-shrunk: dims/depths roughly halved. Target ~1.5M params."""
+    model = MicroViT(
+        dims=[64, 128, 192],
+        depths=[2, 3, 3],
+        type=['c', 'c', 'a'],
+        qk_dim=[0, 0, 16],
+        attn_sr=[0, 0, 1],
+        attn_ipg=[0, 0, 16],
+        attn_cr=[0, 0, 0.215],
+        mlp_ratio=2,
+        patch_size=4,
+        act_layer=nn.GELU,
+        final_feature=None,
+        **kwargs,
+    )
+    return model
+
+
+@register_model
+def microvit_micro_64(pretrained=False, **kwargs):
+    """Extreme shrink for FPGA. Target ~0.5M params."""
+    model = MicroViT(
+        dims=[48, 96, 128],
+        depths=[1, 2, 2],
+        type=['c', 'c', 'a'],
+        qk_dim=[0, 0, 16],
+        attn_sr=[0, 0, 1],
+        attn_ipg=[0, 0, 16],
+        attn_cr=[0, 0, 0.215],
+        mlp_ratio=2,
+        patch_size=4,
+        act_layer=nn.GELU,
+        final_feature=None,
+        **kwargs,
+    )
+    return model
+
+
 def replace_batchnorm(net):
     for child_name, child in net.named_children():
         if hasattr(child, 'fuse'):
